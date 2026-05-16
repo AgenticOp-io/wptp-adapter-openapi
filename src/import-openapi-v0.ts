@@ -1,5 +1,4 @@
-import type { IrDocumentV0 } from "./ir-v0.js";
-import { IR_V0_SCHEMA_VERSION } from "./ir-v0.js";
+import { IR_V0_SCHEMA_VERSION, type IrDocumentV0 } from "@wptp/ir";
 
 export interface OpenApiDocument {
   readonly openapi?: string;
