@@ -7,6 +7,21 @@ export interface OpenApiDocument {
   readonly paths?: Record<string, Record<string, unknown>>;
 }
 
+/** First 2xx status from OpenAPI `responses`, else method default (POST → 201, else 200). */
+export function primarySuccessStatus(
+  responses: unknown,
+  method: string,
+): number {
+  if (responses && typeof responses === "object") {
+    const codes = Object.keys(responses)
+      .map((k) => Number(k))
+      .filter((c) => Number.isFinite(c) && c >= 200 && c < 300)
+      .sort((a, b) => a - b);
+    if (codes.length > 0) return codes[0]!;
+  }
+  return method.toUpperCase() === "POST" ? 201 : 200;
+}
+
 function methodOps(pathItem: Record<string, unknown>): Array<{ method: string; op: Record<string, unknown> }> {
   const methods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"];
   const out: Array<{ method: string; op: Record<string, unknown> }> = [];
@@ -41,6 +56,7 @@ export function importOpenApiV0(doc: OpenApiDocument, sourceApp = "openapi"): Ir
           method,
           operationId: typeof op.operationId === "string" ? op.operationId : undefined,
           summary: typeof op.summary === "string" ? op.summary : undefined,
+          responseStatus: primarySuccessStatus(op.responses, method),
         },
         provenance: [
           {

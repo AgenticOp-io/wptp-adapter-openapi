@@ -1,4 +1,16 @@
 import { IR_V0_SCHEMA_VERSION } from "@wptp/ir";
+/** First 2xx status from OpenAPI `responses`, else method default (POST → 201, else 200). */
+export function primarySuccessStatus(responses, method) {
+    if (responses && typeof responses === "object") {
+        const codes = Object.keys(responses)
+            .map((k) => Number(k))
+            .filter((c) => Number.isFinite(c) && c >= 200 && c < 300)
+            .sort((a, b) => a - b);
+        if (codes.length > 0)
+            return codes[0];
+    }
+    return method.toUpperCase() === "POST" ? 201 : 200;
+}
 function methodOps(pathItem) {
     const methods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"];
     const out = [];
@@ -33,6 +45,7 @@ export function importOpenApiV0(doc, sourceApp = "openapi") {
                     method,
                     operationId: typeof op.operationId === "string" ? op.operationId : undefined,
                     summary: typeof op.summary === "string" ? op.summary : undefined,
+                    responseStatus: primarySuccessStatus(op.responses, method),
                 },
                 provenance: [
                     {
